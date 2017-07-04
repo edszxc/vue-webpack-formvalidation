@@ -15,14 +15,14 @@
                 <div class="col-xs-12 col-sm-6">
                     <div class="row">
                         <div class="col-xs-8">
-                            <input type="text" v-model="contactInfo" @keyup.enter="addContact" placeholder="Contact Information" class="input-field form-control">
+                            <input type="text" v-model="contactInfo" @keyup.enter="addContact" @keyup.esc="clear" placeholder="Contact Information" class="input-field form-control">
                         </div>
                         <div class="col-xs-4">
-                            <button @click="addContact" class="btn btn-block btn-primary">Add Contact</button>
+                            <button :disabled="!fulfill" @click="addContact" class="btn btn-block btn-primary">Add Contact</button>
                         </div>
                     </div>
                     <ul class="contact-list">
-                        <li v-for="contact in contactList">{{ contact }} <button @click="remove(contact)" class="btn btn-danger"><i class="fa fa-times"></i> x</i></button></li>
+                        <li v-for="contact in contactList"><contact-component :contact="contact"></contact-component><button @click="remove(contact)" class="btn btn-danger"><i class="fa fa-times"></i> x</i></button></li>
                     </ul>
                 </div>
             </div>
@@ -53,6 +53,26 @@
 </template>
 
 <script>
+    import vue from 'vue'
+    
+    var contactComponent = vue.extend({
+        template: '<span v-if="!editMode" @dblclick="openEdit">{{ contact.info }}</span><span v-else><input type="text" v-model="contact.info" @keyup.enter="saveUpdate" class="form-control"></span>',
+        data() {
+            return {
+                editMode: false
+            }
+        },
+        props: ['contact'],
+        methods: {
+            openEdit() {
+                this.editMode = true
+            },
+            saveUpdate() {
+                this.editMode = false
+            }
+        }
+    })
+    vue.component('contact-component', contactComponent)
     export default {
         name: 'registration',
         data() {
@@ -62,7 +82,9 @@
                 nickname: '',
                 address: '',
                 contactInfo: '',
-                contactList: [],
+                contactList: [{
+                    info: '0909090909'
+                }],
                 persons: [{
                     fullname: 'Ed Lui Diongco',
                     nickname: 'Ed',
@@ -74,8 +96,10 @@
         },
         methods: {
             addContact() {
-                this.contactList.push(this.contactInfo)
-                this.contactInfo = ''
+                if(this.contactInfo.trim()){
+                    this.contactList.push({info: this.contactInfo})
+                    this.contactInfo = ''
+                }
             },
             remove(contact) {
                 this.contactList.splice(this.contactList.indexOf(contact), 1)
@@ -92,11 +116,17 @@
                 this.nickname = ''
                 this.address = ''
                 this.contactList = []
+            },
+            clear() {
+                this.contactInfo = ''
             }
         },
         computed: {
             isComplete() {
                 return this.fullname != '' && this.nickname != '' && this.address != '' && this.contactList != ''
+            },
+            fulfill() {
+                return this.contactInfo != ''
             }
         }
     }
